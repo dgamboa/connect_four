@@ -46,22 +46,21 @@ def strip_digits(message)
   message = message.gsub(/\d/, "")
 end
 
+# TweetStream::Client.new.track('bieber') do |status|
+#   puts "#{status.text}"
+# end
 
+puts "Start time: #{Time.now}"
 TweetStream::Client.new.on_delete{ |status_id, user_id|
   Tweet.delete(status_id)
   }.on_limit { |skip_count|
     puts "skipping"
     sleep 5
-  }.track(HASHTAG) do |status|
-    msg = status.text
-    puts status.in_reply_to_screen_name
-    @username = status.user.screen_name if challenge?(msg)
-    puts @username
+  }.track('@dariusmorris4') do |status|
+    puts "Tweet retrieved: #{Time.now}"
+    puts status.text
     puts "end"
 end
-
-
-
 
 def limit
   @client.on_limit do |skip_count|
@@ -72,3 +71,7 @@ end
 def found_hashtag?(hashtag_array, hashtag)
   hashtag_array.include?(hashtag)
 end
+
+
+
+
