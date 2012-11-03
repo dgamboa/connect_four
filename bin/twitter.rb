@@ -38,36 +38,33 @@ def post_challenge
 end
 
 def challenge?(message)
-  message = strip_hash(message)
-  return true if message == "@deepteal Game on!"
-  false
-end
-
-def strip_hash(message)
-  message = message.gsub(/\s\#dbc_c4/, "")
+  return !(message =~ /[\s+]?\@deepteal [G|g]ame on[!]? \#dbc_c4[\s+]?/).nil?
 end
 
 # -----------------------------------------------------------------------------
-# Open the TwitterStream and start the game
+# Start the game and open the TweetStream
 # -----------------------------------------------------------------------------
 
 post_challenge
-@username = ""
-TweetStream::Client.new.on_delete{ |status_id, user_id|
-  Tweet.delete(status_id)
-  }.on_limit { |skip_count|
-    puts "skipping"
-    sleep 5
-  }.track('@deepteal') do |status|
-    msg = status.text
-    if challenge?(msg)
-      @username = status.user.screen_name 
-      Twitter.update("#{@username} get ready to be crushed!")
-      start_game
-      post_challenge
-    end
+
+def listen_for_challenger
+  TweetStream::Client.new.on_delete{ |status_id, user_id|
+    Tweet.delete(status_id)
+    }.on_limit { |skip_count|
+      puts "skipping"
+      sleep 5
+    }.track('@deepteal') do |status|
+      msg = status.text
+      if challenge?(msg)
+        player = status.user.screen_name
+        Twitter.update("\@{player} get ready to be crushed!")
+        start_game(player)
+        post_challenge
+      end
+  end
 end
 
-def start_game
+def start_game(player)
 
 end
+
