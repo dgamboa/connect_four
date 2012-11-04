@@ -53,7 +53,7 @@ describe Board do
   end
 
   context "constructing diagonals" do
-    it "has a diagonal, [1, nil, 3, 4, 5]" do
+    it "has a diagonal, [0, nil, 2, 3, 4]" do
       5.times { board.place(4, 4) }
       5.times { board.place(3, 3) }
       5.times { board.place(2, 2) }
@@ -68,7 +68,7 @@ describe Board do
       board.diagonals[0].should eq [4, 5, 6]
     end
 
-    it "has a diagonal, [1, nil, 3, 4, 5]" do
+    it "has a diagonal, [nil, 2, 3, 4, nil, nil]" do
       5.times { board.place(4, 4) }
       5.times { board.place(3, 3) }
       5.times { board.place(0, 0) }

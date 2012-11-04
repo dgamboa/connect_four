@@ -2,7 +2,7 @@ require_relative 'column'
 
 class Board
 
-  attr_reader :cells, :num_cols, :num_rows, :current_column_played, :current_player
+  attr_reader :cells, :num_cols, :num_rows, :current_player
 
   def initialize(num_cols = 7, num_rows = 6)
     @cells = create_columns(num_cols)
@@ -12,7 +12,6 @@ class Board
   end
 
   def place(column_index, player)
-    @current_column_played = column_index
     @current_player = player
     cells[column_index].place(player, num_rows)
   end
@@ -23,10 +22,6 @@ class Board
 
   def populate
     cells.each_with_index { |cell, index| 6.times { cell << index} }
-  end
-
-  def set_last(col_num)
-    @current_column_played = col_num
   end
 
   def state
@@ -43,19 +38,30 @@ class Board
   end
 
   def column_win?
-    column_pieces = cells[current_column_played].join
-    connect_four?(column_pieces)
+    num_cols.times do |column_number|
+      column_pieces = cells[column_number].join
+      return true if connect_four?(column_pieces)
+    end
+    false
   end
 
   def row_win?
-    last_piece_row_index = @cells[current_column_played].length - 1
-    row_pieces = nil_to_hash_sign(cells.map { |column| column[last_piece_row_index] }).join
-    connect_four?(row_pieces)
+    @num_rows.times do |row_number|
+      row_pieces = nil_to_hash_sign(@cells.map { |column| column[row_number] }).join
+      return true if connect_four?(row_pieces)
+    end
+    false
   end
 
   def diagonal_win?
-    first_pieces, second_pieces = diagonals.map { |diagonal| nil_to_hash_sign(diagonal).join }
-    connect_four?(first_pieces) || connect_four?(second_pieces)
+    @row_to_test = 2
+    num_cols.times do |current_column|
+      @current_column = current_column
+      puts "--------------"
+      first_pieces, second_pieces = diagonals.map { |diagonal| nil_to_hash_sign(diagonal).join }
+      return true if connect_four?(first_pieces) || connect_four?(second_pieces)
+    end
+    false
   end
 
   def connect_four?(pieces)
@@ -67,13 +73,13 @@ class Board
   end
 
   def diagonals
-    d0 = left_top + [current_player] + right_bottom
-    d1 = left_bottom + [current_player] + right_top
+    d0 = left_top + cells[@current_column][@row_to_test] + right_bottom
+    d1 = left_bottom + cells[@current_column][@row_to_test] + right_top
     [d0, d1]
   end
 
   def right_bottom
-    right_array, column_index, row_index, num_cols = diagonal_elements
+    right_array, column_index, row_index = diagonal_elements
 
     until column_index == num_cols || row_index == 0
       column_index += 1
@@ -95,7 +101,7 @@ class Board
   end
 
     def right_top
-    right_array, column_index, row_index, num_cols = diagonal_elements
+    right_array, column_index, row_index = diagonal_elements
 
     until column_index == num_cols || row_index == num_rows - 1
       column_index += 1
@@ -131,7 +137,7 @@ class Board
   private
 
   def diagonal_elements
-    [[], current_column_played, cells[current_column_played].length - 1, cells.length - 1]
+    [[], @current_column, @row_to_test]
   end
 
 end
