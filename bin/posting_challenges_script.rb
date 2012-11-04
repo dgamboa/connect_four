@@ -2,7 +2,7 @@ require 'sqlite3'
 require 'twitter'
 require 'tweetstream'
 require 'yaml'
-require_relative 'session'
+require_relative '../lib/session'
 
 
 # ----------------------------------------------------------------------------------------
@@ -37,11 +37,11 @@ $sessions_container = []
 
 def post_challenge
   post_id = Time.now.strftime("%F %T.%L")
-  Twitter.update("Who wants to get demolished? #dbc_c4 #{post_id}")
+  Twitter.update("Who wants to get demolished? \#dbc_c4 #{post_id}")
   listen_for_game
 end
 
-def challenge?(message)
+def acceptance?(message)
   return !(message =~ /[\s]*\@deepteal[\s]*[G|g]ame[\s]*on[!]?[\s]*\#dbc_c4[\s]*/).nil?
 end
 
@@ -49,8 +49,13 @@ def board?(message)
   return !(message =~ /[\s]*\@deepteal[\s]*(\|\S{7}\|\S{7}\|\S{7}\|\S{7}\|\S{7}\|\S{7}\|)[\s]*\#dbc_c4[\s]*/).nil?
 end
 
-def start_game(player)
-  $sessions_container << Session.new(player)
+def take_challenge?(message)
+
+end
+
+
+def start_game(opponent)
+  $sessions_container << Session.new(opponent)
 end
 
 def strip_to_board(message)
@@ -58,9 +63,9 @@ def strip_to_board(message)
   return $1
 end
 
-def send_to_session(player, board)
+def send_to_session(opponent, board)
   $sessions_container.each do |session|
-    if session.player == player
+    if session.player == opponent
       session.receive(board)
       return true
     end
@@ -68,8 +73,15 @@ def send_to_session(player, board)
   false
 end
 
+def not_already_playing?(opponent)
+  $sessions_container.each do |session|
+    return false if session.player == opponent
+  end
+  return true
+end
+
 # ----------------------------------------------------------------------------------------
-# Start the game and open the TweetStream
+# Post a challenge and open the TweetStream
 # ----------------------------------------------------------------------------------------
 
 post_challenge
@@ -80,22 +92,19 @@ def listen_for_game
     }.on_limit { |skip_count|
       puts "skipping"
       sleep 5
-    }.track('@deepteal') do |status|
+    }.track('#dbc_c4') do |status|
       msg = status.text
-      if challenge?(msg)
-        player = status.user.screen_name
-        Twitter.update("\@{player} get ready to be crushed!")
-        start_game(player)
+      opponent = status.user.screen_name
+      if not_already_playing?(opponent) && acceptance?(msg)
+        Twitter.update("\@{opponent} get ready to be crushed!")
+        start_game(opponent)
         post_challenge
       elsif board?(msg)
-        player = status.user.screen_name
         board = strip_to_board(msg)
-        start_game(player) unless send_to_session(player, board)
+        start_game(opponent) unless send_to_session(opponent, board)
+      elsif not_already_playing?(opponent) && take_challenge?(msg)
+        Twitter.update("\@{opponent} Game on! \#dbc_c4")
+        start_game(opponent)
       end
-  end
+    end
 end
-
-# A session object should have a player attr_reader that containes the opponent's username (for session_handler check and to know who to send to)
-# It should also have a method #receive that takes in a board in string format
-# It should also have an initialize method that takes in a player in the format 'username' not '@username'
-
