@@ -8,7 +8,7 @@ class Board
     @cells = create_columns(num_cols)
     @num_rows = num_rows
     @num_cols = num_cols
-    @value
+    @current_column = 0
   end
 
   def place(column_index, player)
@@ -54,11 +54,11 @@ class Board
   end
 
   def diagonal_win?
-    @row_to_test = 2
     num_cols.times do |current_column|
       @current_column = current_column
-      puts "--------------"
       first_pieces, second_pieces = diagonals.map { |diagonal| nil_to_hash_sign(diagonal).join }
+      p first_pieces
+      p second_pieces
       return true if connect_four?(first_pieces) || connect_four?(second_pieces)
     end
     false
@@ -73,15 +73,16 @@ class Board
   end
 
   def diagonals
-    d0 = left_top + cells[@current_column][@row_to_test] + right_bottom
-    d1 = left_bottom + cells[@current_column][@row_to_test] + right_top
+    puts cells[0]
+    d0 = left_top + right_bottom
+    d1 = left_bottom + right_top
     [d0, d1]
   end
 
   def right_bottom
     right_array, column_index, row_index = diagonal_elements
 
-    until column_index == num_cols || row_index == 0
+    until column_index == num_cols - 1 || row_index == 0
       column_index += 1
       row_index -= 1
       right_array << cells[column_index][row_index]
@@ -93,6 +94,9 @@ class Board
     left_array, column_index, row_index = diagonal_elements
 
     until column_index == 0 || row_index == num_rows - 1
+      puts "----"
+      puts column_index
+      puts "-----"
       column_index -= 1
       row_index += 1
       left_array << cells[column_index][row_index]
@@ -103,7 +107,7 @@ class Board
     def right_top
     right_array, column_index, row_index = diagonal_elements
 
-    until column_index == num_cols || row_index == num_rows - 1
+    until column_index == num_cols - 1 || row_index == num_rows - 1
       column_index += 1
       row_index += 1
       right_array << cells[column_index][row_index]
@@ -137,7 +141,7 @@ class Board
   private
 
   def diagonal_elements
-    [[], @current_column, @row_to_test]
+    [[], @current_column, 2]
   end
 
 end
